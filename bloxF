@@ -87,10 +87,10 @@ getgenv()['JsonDecode'] = function(msg)
     return game:GetService("HttpService"):JSONDecode(msg)
 end
 getgenv()['Check_Setting'] = function(Name)
-    if not _G.Dis and not isfolder('Switch Hub BF Premium') then
+    if not _G.Dis and not isfolder('One Hub BF Premium') then
         makefolder('One Hub BF Premium')
     end
-    if not _G.Dis and not isfile('Switch Hub BF Premium/'..Name..'.json') then
+    if not _G.Dis and not isfile('One Hub BF Premium/'..Name..'.json') then
         writefile('One Hub BF Premium/'..Name..'.json',JsonEncode(_G.Setting_table))
     end
 end
