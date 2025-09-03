@@ -1,0 +1,134 @@
+
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local PlaceId = 10704789056 -- Drive World
+local Visited = {}
+
+-- Blacklist / Bad Players
+local Blacklist = {
+    "Ritticle",
+    "imsusatmath",
+    "DestroyerRebecca",
+    "RedMantaStudio",
+    "SniperGhostGame",
+    "Usering",
+    "AbstractAlex",
+    "saeroyigray",
+    "DestroyerRono",
+    "NoobyBrennen07",
+    "illuminartiz",
+    "wx_zuio",
+    "IxGuana_GoxI",
+    "waggcry",
+    "legopizza26"
+}
+
+-- GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0.6, 0, 0.6, 0)
+frame.Position = UDim2.new(0.2, 0, 0.2, 0)
+frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+frame.BorderSizePixel = 2
+frame.Parent = screenGui
+
+local textBox = Instance.new("TextBox")
+textBox.Size = UDim2.new(1, -10, 1, -10)
+textBox.Position = UDim2.new(0, 5, 0, 5)
+textBox.BackgroundTransparency = 1
+textBox.TextColor3 = Color3.new(1, 1, 1)
+textBox.TextXAlignment = Enum.TextXAlignment.Left
+textBox.TextYAlignment = Enum.TextYAlignment.Top
+textBox.ClearTextOnFocus = false
+textBox.MultiLine = true
+textBox.TextWrapped = true
+textBox.Parent = frame
+
+-- ฟังก์ชันดึง server list
+local function GetServers(cursor)
+    local url = "https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?sortOrder=Asc&limit=100"
+    if cursor then
+        url = url.."&cursor="..cursor
+    end
+    local success, result = pcall(function()
+        return game:HttpGet(url)
+    end)
+    if success and result then
+        return HttpService:JSONDecode(result)
+    else
+        warn("ไม่สามารถเข้าถึง API")
+        return nil
+    end
+end
+
+-- ฟังก์ชันเช็ค Bad Player
+local function hasBadPlayer(serverPlayers)
+    for _, plrName in ipairs(serverPlayers) do
+        for _, b in ipairs(Blacklist) do
+            if plrName:lower() == b:lower() then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+-- ฟังก์ชันดึงรายชื่อผู้เล่นในเซิร์ฟ (จำกัด 50 คน)
+local function GetServerPlayers(serverId)
+    local players = {}
+    local success, result = pcall(function()
+        local url = "https://games.roblox.com/v1/games/"..PlaceId.."/servers/Public?limit=50&sortOrder=Asc"
+        local data = HttpService:JSONDecode(game:HttpGet(url))
+        for _, s in ipairs(data.data) do
+            if s.id == serverId and s.players then
+                for _, p in ipairs(s.players) do
+                    table.insert(players, p.name)
+                end
+            end
+        end
+    end)
+    return players
+end
+
+-- Loop Hop
+while true do
+    task.wait(0.1)
+    textBox.Text = "กำลังหาเซิร์ฟ 1-15 คนและไม่มี Bad Player..."
+
+    local Server, cursor = nil, nil
+    repeat
+        local data = GetServers(cursor)
+        if not data then
+            task.wait(0.5)
+            break
+        end
+
+        for _, s in ipairs(data.data) do
+            if not Visited[s.id] and s.id ~= game.JobId and s.playing >= 1 and s.playing <= 15 then
+                local serverPlayers = GetServerPlayers(s.id)
+                if not hasBadPlayer(serverPlayers) then
+                    Server = s
+                    Visited[s.id] = true
+                    break
+                end
+            end
+        end
+
+        cursor = data.nextPageCursor
+    until Server or not cursor
+
+    if Server then
+        textBox.Text = "วาปไปเซิร์ฟ: "..Server.id.." คน: "..Server.playing
+        pcall(function()
+            TeleportService:TeleportToPlaceInstance(PlaceId, Server.id, LocalPlayer)
+        end)
+    else
+        textBox.Text = "ไม่พบ server ที่ตรงเงื่อนไข หรือเจอ Bad Player"
+        Visited = {} -- retry
+    end
+end
