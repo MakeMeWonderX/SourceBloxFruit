@@ -1,0 +1,628 @@
+-- HWID Authentication System REMOVED
+do
+    -- Main script execution (Original code inside 'if L_6_ then')
+    local L_66_, L_67_ =
+        pcall(
+        function()
+            return loadstring(
+                game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua")
+            )()
+        end
+    )
+    if not L_66_ then
+        warn("โหลด WindUI ล้มเหลว: " .. L_67_)
+        return
+    end
+    local function L_68_func(L_155_arg0, L_156_arg1, L_157_arg2)
+        local L_158_ = ""
+        for L_159_forvar0 = 1, #L_155_arg0 do
+            local L_160_ = (L_159_forvar0 - 1) / math.max(#L_155_arg0 - 1, 1)
+            local L_161_ = math.floor((L_156_arg1.R + ((L_157_arg2.R - L_156_arg1.R) * L_160_)) * 255)
+            local L_162_ = math.floor((L_156_arg1.G + ((L_157_arg2.G - L_156_arg1.G) * L_160_)) * 255)
+            local L_163_ = math.floor((L_156_arg1.B + ((L_157_arg2.B - L_156_arg1.B) * L_160_)) * 255)
+            L_158_ =
+                L_158_ ..
+                '<font color="rgb(' ..
+                    L_161_ ..
+                        "," ..
+                            L_162_ ..
+                                "," .. L_163_ .. ')">' .. L_155_arg0:sub(L_159_forvar0, L_159_forvar0) .. "</font>"
+        end
+        return L_158_
+    end
+    local L_69_ = false
+    L_67_:Popup(
+        {
+            Title = "ยินดีต้อนรับสู่ WindUI",
+            Icon = "rbxassetid://129260712070622",
+            IconThemed = true,
+            Content = "ตัวอย่าง UI สำหรับ " ..
+                L_68_func("WindUI", Color3.fromHex("#00FF87"), Color3.fromHex("#60EFFF")),
+            Buttons = {{Title = "ยกเลิก", Variant = "Secondary", Callback = function()
+                    end}, {Title = "ดำเนินการ", Icon = "arrow-right", Variant = "Primary", Callback = function()
+                        L_69_ = true
+                    end}}
+        }
+    )
+    repeat
+        task.wait()
+    until L_69_
+    local L_70_ =
+        L_67_:CreateWindow(
+        {
+            Title = "WindUI AutoFarm",
+            Icon = "rbxassetid://129260712070622",
+            IconThemed = true,
+            Author = "AutoFarm Script",
+            Folder = "CloudHub",
+            Size = UDim2.fromOffset(580, 460),
+            Theme = "Dark",
+            User = {Enabled = true, Anonymous = true},
+            SideBarWidth = 200,
+            ScrollBarEnabled = true
+        }
+    )
+    local L_71_ = L_70_:Tab({Title = "หลัก", Icon = "bird"})
+    local L_72_ = false
+    local L_73_ = false
+    local L_74_ = false
+    local L_75_ = false
+    local L_76_ = {}
+    local L_77_ = nil
+    local L_78_ = nil
+    local L_79_ = nil
+    local L_80_ = nil
+    local L_81_ = 1
+    local L_82_ = {}
+    local function L_83_func(L_164_arg0, L_165_arg1)
+        if L_82_[L_164_arg0] then
+            return L_82_[L_164_arg0]
+        end
+        return L_165_arg1 * L_81_
+    end
+    local L_84_ = {
+        {
+            path = {"AutoFarm", "Plant", "Point", "ProximityPrompt"},
+            pos = Vector3.new(6085.27587890625, 49.21938705444336, -2233.761962890625),
+            name = "Plant Point",
+            waitTime = 185
+        },
+        {
+            path = {"AutoFarm", "Strawberry", "Point", "ProximityPrompt"},
+            pos = Vector3.new(5949.7333984375, 48.99654006958008, -1698.1767578125),
+            name = "Strawberry Point",
+            waitTime = 185
+        },
+        {
+            path = {"AutoFarm", "Grape", "Point", "ProximityPrompt"},
+            pos = Vector3.new(5459.58642578125, 47.27458190917969, -1199.485107421875),
+            name = "Grape Point",
+            waitTime = 185
+        },
+        {
+            path = {"AutoFarm", "Wood", "Point", "ProximityPrompt"},
+            pos = Vector3.new(2415.506591796875, 31.06249237060547, -2407.61865234375),
+            name = "Wood Point 1",
+            waitTime = 185
+        },
+        {
+            path = {"AutoFarm", "Chilli", "Point", "ProximityPrompt"},
+            pos = Vector3.new(-612.934814453125, 21.25594711303711, -3341.207275390625),
+            name = "Chilli Point 2",
+            waitTime = 185
+        },
+        {
+            path = {"AutoFarm", "Grassbush", "Point", "ProximityPrompt"},
+            pos = Vector3.new(-2449.72412109375, 73, -2038.025390625),
+            name = "Grassbush Point",
+            waitTime = 750
+        },
+        {
+            path = {"AutoFarm", "Flower", "Point", "ProximityPrompt"},
+            pos = Vector3.new(-1785.1405029296875, 128.125, 1138.6656494140625),
+            name = "Flower Point",
+            waitTime = 700
+        },
+        {
+            path = {"AutoFarm", "Banana", "Point", "ProximityPrompt"},
+            pos = Vector3.new(-1093.5892333984375, 135.50192260742188, 2417.61083984375),
+            name = "Banana Point",
+            waitTime = 185
+        },
+        {
+            path = {"AutoFarm", "Pork", "Point", "ProximityPrompt"},
+            pos = Vector3.new(-538.1380004882812, 56.65624237060547, 3128.591064453125),
+            name = "Pork Point",
+            waitTime = 185
+        },
+        {
+            path = {"AutoFarm", "Coconut", "Point", "ProximityPrompt"},
+            pos = Vector3.new(-2833.5302734375, 18.511947631835938, 2197.18505859375),
+            name = "Coconut Point",
+            waitTime = 185
+        }
+    }
+    local L_85_ = game:GetService("Players")
+    local L_86_ = L_85_.LocalPlayer
+    local L_87_ = game:GetService("VirtualInputManager")
+    local L_88_ = game:GetService("RunService")
+    local L_89_ = game:GetService("UserInputService")
+    local L_90_ = game:GetService("Workspace")
+    local L_91_ = L_90_.CurrentCamera
+    local function L_92_func()
+        local L_166_ = L_86_.Character or L_86_.CharacterAdded:Wait()
+        return L_166_:WaitForChild("HumanoidRootPart", 5) or error("ไม่พบ HumanoidRootPart!")
+    end
+    local function L_93_func()
+        L_87_:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+        wait(0.05)
+        L_87_:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+        print("กดปุ่ม E เรียบร้อย!")
+    end
+    local function L_94_func(L_167_arg0)
+        local L_168_ = 2
+        for L_169_forvar0 = 1, L_168_ do
+            local L_170_ = workspace
+            for L_171_forvar0, L_172_forvar1 in ipairs(L_167_arg0) do
+                L_170_ = L_170_:FindFirstChild(L_172_forvar1)
+                if not L_170_ then
+                    break
+                end
+            end
+            if (L_170_ and L_170_:IsA("ProximityPrompt")) then
+                return L_170_
+            end
+            print(string.format("ไม่พบ ProximityPrompt ในการลองครั้งที่ %d, รอ 0.5 วินาที...", L_169_forvar0))
+            wait(0.5)
+        end
+        warn("ไม่พบ ProximityPrompt หลังลอง " .. L_168_ .. " ครั้ง!")
+        return nil
+    end
+    local function L_95_func()
+        local L_173_ = L_86_.Character or L_86_.CharacterAdded:Wait()
+        local L_174_ = L_173_:WaitForChild("HumanoidRootPart", 5) or error("ไม่พบ HumanoidRootPart!")
+        local L_175_ = tick()
+        while (tick() - L_175_) < 5 do
+            local L_176_ = Ray.new(L_174_.Position, Vector3.new(0, -10, 0))
+            local L_177_, L_178_ = workspace:FindPartOnRay(L_176_, L_173_)
+            if (L_177_ and ((L_174_.Position - L_178_).Magnitude < 5)) then
+                return true
+            end
+            wait(0.1)
+        end
+        return true
+    end
+    local function L_96_func(L_179_arg0, L_180_arg1)
+        local L_181_ = L_92_func()
+        local L_182_ = L_86_.Character:FindFirstChildOfClass("Humanoid")
+        if (not L_181_ or not L_182_) then
+            return
+        end
+        L_182_.WalkSpeed = 0
+        L_182_.JumpPower = 0
+        L_182_.PlatformStand = true
+        L_181_.Anchored = true
+        L_181_.CFrame = CFrame.new(L_179_arg0 + Vector3.new(0, -10, 0))
+        print(string.format("ลอยตัวนิ่งที่ %s", L_180_arg1))
+        wait(1.5)
+        L_181_.Anchored = false
+        L_182_.PlatformStand = false
+        L_182_.WalkSpeed = 40
+        L_182_.JumpPower = 50
+        L_181_.CFrame = CFrame.new(L_179_arg0)
+        L_181_.Velocity = Vector3.new(0, 0, 0)
+        print(string.format("ลงพื้นที่ %s", L_180_arg1))
+        L_95_func()
+        L_67_:Notify(
+            {
+                Title = "สำเร็จ",
+                Content = string.format("ถึง %s เรียบร้อย", L_180_arg1),
+                Icon = "check",
+                Duration = 2
+            }
+        )
+    end
+    local function L_97_func(L_183_arg0, L_184_arg1, L_185_arg2, L_186_arg3, L_187_arg4)
+        if not L_187_arg4() then
+            return
+        end
+        print(string.format("เริ่ม AutoFarm ที่ %s", L_185_arg2))
+        L_96_func(L_184_arg1, L_185_arg2)
+        local L_188_ = L_94_func(L_183_arg0)
+        if not L_188_ then
+            warn(string.format("ข้าม %s: ไม่พบ ProximityPrompt", L_185_arg2))
+            return
+        end
+        L_188_.HoldDuration = 0
+        print(string.format("ปรับ HoldDuration เป็น 0 สำหรับ %s", L_185_arg2))
+        for L_190_forvar0 = 1, 3 do
+            if not L_187_arg4() then
+                return
+            end
+            L_93_func()
+            wait(0.3)
+        end
+        local L_189_ = L_83_func(L_185_arg2, L_186_arg3)
+        wait(math.min(L_189_, 750))
+        print(string.format("เสร็จสิ้น AutoFarm ที่ %s (รอ %d วินาที)", L_185_arg2, L_189_))
+    end
+    local function L_98_func()
+        local function L_191_func(L_192_arg0)
+            L_87_:SendKeyEvent(true, L_192_arg0, false, game)
+            wait(0.05)
+            L_87_:SendKeyEvent(false, L_192_arg0, false, game)
+        end
+        L_191_func(Enum.KeyCode.BackSlash)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Left)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Right)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Right)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Return)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Left)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Left)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Right)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Right)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Return)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Left)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Return)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Right)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Right)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_191_func(Enum.KeyCode.Return)
+        wait(0.1)
+    end
+    local function L_99_func()
+        local function L_193_func(L_194_arg0)
+            L_87_:SendKeyEvent(true, L_194_arg0, false, game)
+            wait(0.05)
+            L_87_:SendKeyEvent(false, L_194_arg0, false, game)
+        end
+        L_193_func(Enum.KeyCode.BackSlash)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Left)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Return)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Right)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Right)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Return)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Down)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Left)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Return)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Right)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Right)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Up)
+        wait(0.1)
+        L_193_func(Enum.KeyCode.Return)
+        wait(0.1)
+    end
+    local L_100_ = L_70_:Tab({Title = "ฟาร์ม", Icon = "crop-square"})
+    local L_101_ = L_100_:Section({Title = "ฟาร์มอัตโนมัติ"})
+    local L_102_ = L_101_:Toggle({Title = "เปิด/ปิด", Icon = "power-on", StartValue = L_72_, Callback = function(L_320_arg0)
+            L_72_ = L_320_arg0
+        end})
+    local L_103_ =
+        L_101_:Select(
+        {
+            Title = "จุดฟาร์ม",
+            Icon = "compass",
+            Values = (function()
+                local L_321_ = {}
+                for L_322_forvar0, L_323_forvar1 in ipairs(L_84_) do
+                    L_321_[#L_321_ + 1] = L_323_forvar1.name
+                end
+                return L_321_
+            end)(),
+            StartValue = L_76_[1] and L_76_[1].name or (L_84_[1] and L_84_[1].name),
+            Callback = function(L_324_arg0)
+                for L_325_forvar0, L_326_forvar1 in ipairs(L_84_) do
+                    if (L_326_forvar1.name == L_324_arg0) then
+                        L_77_ = L_326_forvar1
+                        break
+                    end
+                end
+            end
+        }
+    )
+    L_77_ = L_84_[1]
+    L_101_:Seperator({Text = "ตั้งค่า"})
+    local L_104_ = L_101_:Slider({Title = "ความเร็วการฟาร์ม (เท่า)", Icon = "speed-meter", Min = 0.5, Max = 10, Inc = 0.5, StartValue = L_81_, Suffix = "x", Callback = function(L_327_arg0)
+            L_81_ = L_327_arg0
+        end})
+    local L_105_ = L_101_:Toggle({Title = "ฟาร์มซ้ำ (วนซ้ำจุดเดียว)", Icon = "repeat", StartValue = L_73_, Callback = function(L_328_arg0)
+            L_73_ = L_328_arg0
+        end})
+    local L_106_ = L_101_:Toggle({Title = "ใช้มีดฟันอัตโนมัติ", Icon = "blade-light", StartValue = L_74_, Callback = function(L_329_arg0)
+            L_74_ = L_329_arg0
+        end})
+    local L_107_ = L_101_:Toggle({Title = "ใช้จอบขุดอัตโนมัติ", Icon = "axe-light", StartValue = L_75_, Callback = function(L_330_arg0)
+            L_75_ = L_330_arg0
+        end})
+    local L_108_ = L_100_:Section({Title = "การทำงาน"})
+    local L_109_ = L_108_:Toggle({Title = "สคริปต์ทำงานอยู่", Icon = "activity", StartValue = true, Callback = function(L_331_arg0)
+            L_79_ = L_331_arg0
+        end})
+    L_79_ = true
+    L_108_:Seperator({Text = "ช่วยเหลือ"})
+    local L_110_ = L_108_:Button({Title = "ซ่อมแซมตัวละคร", Icon = "heart", Callback = function()
+            L_86_:LoadCharacter()
+            L_67_:Notify(
+                {
+                    Title = "สำเร็จ",
+                    Content = "ตัวละครของคุณได้รับการซ่อมแซมแล้ว",
+                    Icon = "check",
+                    Duration = 2
+                }
+            )
+        end})
+    local L_111_ = L_108_:Button({Title = "รีเซ็ตตัวละคร", Icon = "refresh-cw", Callback = function()
+            L_86_.Character.Humanoid.Health = 0
+        end})
+    local L_112_ = L_70_:Tab({Title = "เคลื่อนที่", Icon = "move-light"})
+    local L_113_ = L_112_:Section({Title = "วาร์ป"})
+    local L_114_ = L_113_:Select(
+        {
+            Title = "จุดวาร์ป",
+            Icon = "pin",
+            Values = (function()
+                local L_332_ = {}
+                for L_333_forvar0, L_334_forvar1 in ipairs(L_84_) do
+                    L_332_[#L_332_ + 1] = L_334_forvar1.name
+                end
+                return L_332_
+            end)(),
+            StartValue = L_76_[1] and L_76_[1].name or (L_84_[1] and L_84_[1].name),
+            Callback = function(L_335_arg0)
+                for L_336_forvar0, L_337_forvar1 in ipairs(L_84_) do
+                    if (L_337_forvar1.name == L_335_arg0) then
+                        L_78_ = L_337_forvar1
+                        break
+                    end
+                end
+            end
+        }
+    )
+    L_78_ = L_84_[1]
+    local L_115_ = L_113_:Button({Title = "วาร์ปไปยังจุด", Icon = "plane", Callback = function()
+            if L_78_ then
+                L_96_func(L_78_.pos, L_78_.name)
+            end
+        end})
+    local L_116_ = L_112_:Section({Title = "ความเร็ว"})
+    local L_117_ = false
+    local L_118_ = L_116_:Toggle({Title = "เปิด/ปิด ความเร็ว", Icon = "speed-meter", StartValue = L_117_, Callback = function(L_338_arg0)
+            L_117_ = L_338_arg0
+        end})
+    local L_119_ = 16
+    local L_120_ = L_116_:Slider({Title = "ความเร็ว", Icon = "walk-light", Min = 16, Max = 100, Inc = 5, StartValue = L_119_, Suffix = "ความเร็ว", Callback = function(L_339_arg0)
+            L_119_ = L_339_arg0
+        end})
+    L_116_:Seperator({Text = "กระโดด"})
+    local L_121_ = false
+    local L_122_ = L_116_:Toggle({Title = "เปิด/ปิด การกระโดด", Icon = "jump-light", StartValue = L_121_, Callback = function(L_340_arg0)
+            L_121_ = L_340_arg0
+        end})
+    local L_123_ = 50
+    local L_124_ = L_116_:Slider({Title = "แรงกระโดด", Icon = "up-arrow", Min = 0, Max = 200, Inc = 10, StartValue = L_123_, Callback = function(L_341_arg0)
+            L_123_ = L_341_arg0
+        end})
+    L_116_:Sepe
+L_124_ = L_116_:Slider({Title = "แรงกระโดด", Icon = "up-arrow", Min = 0, Max = 200, Inc = 10, StartValue = L_123_, Callback = function(L_341_arg0)
+            L_123_ = L_341_arg0
+        end}) -- << ปิดฟังก์ชัน Slider 
+
+    L_116_:Seperator({Text = "การทำงาน"}) -- << เติม Seperator เพื่อแบ่งส่วน (ตามรูปแบบโค้ดเดิม)
+
+    local L_125_ = false -- อาจเป็นตัวแปรสำหรับ Fly/Noclip
+    local L_126_ = L_116_:Toggle({Title = "Noclip", Icon = "ghost", StartValue = L_125_, Callback = function(L_342_arg0)
+            L_125_ = L_342_arg0
+        end}) -- << เติม Toggle Noclip/Fly
+
+    local L_127_ = L_70_:Tab({Title = "อื่นๆ", Icon = "dots-three"}) -- << เติม Tab สุดท้าย (ตามรูปแบบโค้ดเดิม)
+
+    -- ส่วนการจัดการลูปหลักของสคริปต์
+    L_88_.RenderStepped:Connect(function()
+        if L_79_ then
+            local L_195_ = L_86_.Character or L_86_.CharacterAdded:Wait()
+            local L_196_ = L_195_:FindFirstChildOfClass("Humanoid")
+
+            -- จัดการ WalkSpeed
+            if L_196_ then
+                if L_117_ then
+                    L_196_.WalkSpeed = L_119_
+                else
+                    L_196_.WalkSpeed = 16
+                end
+            end
+
+            -- จัดการ JumpPower
+            if L_196_ then
+                if L_121_ then
+                    L_196_.JumpPower = L_123_
+                else
+                    L_196_.JumpPower = 50
+                end
+            end
+
+            -- จัดการ Noclip/Fly (ตัวอย่าง)
+            if L_125_ then
+                -- โค้ด Noclip/Fly
+            end
+        end
+    end)
+    
+    -- ลูป AutoFarm
+    spawn(function()
+        while true do
+            if not L_79_ then
+                task.wait(1)
+                continue
+            end
+            if L_72_ and L_77_ then
+                L_97_func(L_77_.path, L_77_.pos, L_77_.name, L_77_.waitTime, function()
+                    return L_72_ and L_79_
+                end)
+                if not L_73_ then
+                    -- ถ้าไม่ฟาร์มซ้ำ ให้หยุด
+                    L_72_ = false
+                    L_102_:Set(false)
+                end
+            end
+            task.wait(0.5)
+        end
+    end)
+
+    -- การปิดท้ายของ do...end block
+end -- << ต้องมี 'end' ปิด 'do' ที่อยู่ด้านบนสุดของสคริปต์
