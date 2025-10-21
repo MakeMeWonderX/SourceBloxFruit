@@ -1,0 +1,454 @@
+-- SP_HUB_CLEAN.lua
+-- Clean, commented and readable refactor of the provided SP HUB script.
+-- HWID authentication and related components have been REMOVED.
+-- Features: WindUI integration, AutoFarm manager (points),
+-- player info utilities, spectate/teleport helpers.
+-- NOTE: This script assumes execution inside Roblox exploit environment
+-- supporting game:HttpGet, setclipboard, and WindUI loader.
+
+-- =====================
+-- Config / Constants
+-- =====================
+-- HWID related URLs removed
+local WINDUI_URL = "https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"
+
+-- AutoFarm points definition (name, path to ProximityPrompt, position, waitTime)
+local AutoFarmPoints = {
+    { name = "Plant Point",         path = {"AutoFarm","Plant","Point","ProximityPrompt"}, pos = Vector3.new(6085.27587890625,49.21938705444336,-2233.761962890625), waitTime = 185 },
+    { name = "Strawberry Point",    path = {"AutoFarm","Strawberry","Point","ProximityPrompt"}, pos = Vector3.new(5949.7333984375,48.99654006958008,-1698.1767578125), waitTime = 185 },
+    { name = "Grape Point",         path = {"AutoFarm","Grape","Point","ProximityPrompt"}, pos = Vector3.new(5459.58642578125,47.27458190917969,-1199.485107421875), waitTime = 185 },
+    { name = "Wood Point 1",       path = {"AutoFarm","Wood","Point","ProximityPrompt"}, pos = Vector3.new(2415.506591796875,31.06249237060547,-2407.61865234375), waitTime = 185 },
+    { name = "Chilli Point 2",     path = {"AutoFarm","Chilli","Point","ProximityPrompt"}, pos = Vector3.new(-612.934814453125,21.25594711303711,-3341.207275390625), waitTime = 185 },
+    { name = "Grassbush Point",    path = {"AutoFarm","Grassbush","Point","ProximityPrompt"}, pos = Vector3.new(-2449.72412109375,73,-2038.025390625), waitTime = 750 },
+    { name = "Flower Point",       path = {"AutoFarm","Flower","Point","ProximityPrompt"}, pos = Vector3.new(-1785.1405029296875,128.125,1138.6656494140625), waitTime = 700 },
+    { name = "Banana Point",       path = {"AutoFarm","Banana","Point","ProximityPrompt"}, pos = Vector3.new(-1093.5892333984375,135.50192260742188,2417.61083984375), waitTime = 185 },
+    { name = "Pork Point",         path = {"AutoFarm","Pork","Point","ProximityPrompt"}, pos = Vector3.new(-538.1380004882812,56.65624237060547,3128.591064453125), waitTime = 185 },
+    { name = "Coconut Point",      path = {"AutoFarm","Coconut","Point","ProximityPrompt"}, pos = Vector3.new(-2833.5302734375,18.511947631835938,2197.18505859375), waitTime = 185 },
+}
+
+-- =====================
+-- Services & helpers
+-- =====================
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local HttpService = game:GetService("HttpService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local VirtualInput = game:GetService("VirtualInputManager")
+local Camera = Workspace.CurrentCamera
+
+local function safeHttpGet(url)
+    local ok, res = pcall(function() return game:HttpGet(url) end)
+    if ok then return res end
+    return nil, res
+end
+
+-- =====================
+-- WindUI loader & main window
+-- =====================
+local WindUI = nil
+local WindUIWindow = nil
+local function loadWindUI()
+    local ok, res = pcall(function()
+        return loadstring(game:HttpGet(WINDUI_URL))()
+    end)
+    if not ok then
+        warn("Failed to load WindUI: "..tostring(res))
+        return nil
+    end
+    WindUI = res
+    return WindUI
+end
+
+-- =====================
+-- AutoFarm Manager
+-- Provides functions to find prompts and teleport player safely
+-- =====================
+local AutoFarm = {}
+AutoFarm.active = false
+
+local function findInstanceByPath(path)
+    local cur = Workspace
+    for _, key in ipairs(path) do
+        if not cur then break end
+        cur = cur:FindFirstChild(key)
+    end
+    return cur
+end
+
+local function findProximityPromptWithRetries(path, retries)
+    retries = retries or 2
+    for i=1,retries do
+        local inst = findInstanceByPath(path)
+        if inst and inst:IsA("ProximityPrompt") then
+            return inst
+        end
+        task.wait(0.5)
+    end
+    return nil
+end
+
+local function pressE()
+    VirtualInput:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+    task.wait(0.05)
+    VirtualInput:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+end
+
+local function getRootPart()
+    local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+    return char:WaitForChild("HumanoidRootPart",5)
+end
+
+local function ensureOnGround()
+    -- original script attempted safety checks; keep simple pause
+    task.wait(0.5)
+    return true
+end
+
+local function teleportToPosition(targetPos, label)
+    local root = getRootPart()
+    local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if not root or not humanoid then return end
+    humanoid.WalkSpeed = 0
+    humanoid.JumpPower = 0
+    humanoid.PlatformStand = true
+    root.Anchored = true
+    root.CFrame = CFrame.new(targetPos + Vector3.new(0,-10,0))
+    task.wait(1.5)
+    root.Anchored = false
+    humanoid.PlatformStand = false
+    humanoid.WalkSpeed = 40
+    humanoid.JumpPower = 50
+    root.CFrame = CFrame.new(targetPos)
+    root.Velocity = Vector3.new(0,0,0)
+    ensureOnGround()
+    print("Teleported to: "..tostring(label))
+end
+
+local function performAutoFarmAt(point)
+    print("Starting AutoFarm at: "..point.name)
+    teleportToPosition(point.pos, point.name)
+    local prompt = findProximityPromptWithRetries(point.path)
+    if not prompt then
+        warn("ProximityPrompt not found for "..point.name)
+        return
+    end
+    prompt.HoldDuration = 0
+    for i=1,3 do
+        if not AutoFarm.active then return end
+        pressE()
+        task.wait(0.3)
+    end
+    task.wait(math.min(point.waitTime, 750))
+    print("Finished AutoFarm at: "..point.name)
+end
+
+function AutoFarm:startAll()
+    if self.active then return end
+    self.active = true
+    coroutine.wrap(function()
+        while self.active do
+            for _, p in ipairs(AutoFarmPoints) do
+                if not self.active then break end
+                local ok, err = pcall(performAutoFarmAt, p)
+                if not ok then warn("AutoFarm error at "..p.name..": "..tostring(err)) end
+                task.wait(0.1)
+            end
+        end
+    end)()
+end
+
+function AutoFarm:stop()
+    self.active = false
+end
+
+function AutoFarm:startSelected(names)
+    if self.active then self:stop() end
+    if #names == 0 then warn("No points selected") return end
+    self.active = true
+    coroutine.wrap(function()
+        while self.active do
+            for _, sel in ipairs(names) do
+                if not self.active then break end
+                for _, p in ipairs(AutoFarmPoints) do
+                    if p.name == sel then
+                        local ok, err = pcall(performAutoFarmAt, p)
+                        if not ok then warn("AutoFarm error at "..p.name..": "..tostring(err)) end
+                        break
+                    end
+                end
+                task.wait(0.1)
+            end
+        end
+    end)()
+end
+
+-- =====================
+-- Player info utilities
+-- =====================
+local function listPlayers()
+    local names = {}
+    for _, pl in ipairs(Players:GetPlayers()) do
+        table.insert(names, pl.Name)
+    end
+    return names
+end
+
+local function inspectPhoneFor(playerName)
+    local pl = Players:FindFirstChild(playerName)
+    if not pl then error("Player not found: "..playerName) end
+    local phone = pl:FindFirstChild("Phone")
+    if not phone then print("No phone object") return end
+    print("Phone attributes for "..playerName)
+    for k,v in pairs(phone:GetAttributes()) do
+        print(k..": "..tostring(v))
+    end
+    for _,child in ipairs(phone:GetChildren()) do
+        print(child.Name..": "..tostring(child.Value))
+    end
+end
+
+local function inspectInventoryFor(playerName)
+    local pl = Players:FindFirstChild(playerName)
+    if not pl then error("Player not found: "..playerName) end
+    local inv = pl:FindFirstChild("Inventory") or pl:FindFirstChild("คลังไอเท็ม")
+    if not inv then warn("No inventory folder") return end
+    print("=== Items > 1 for "..playerName.." ===")
+    local found = false
+    for k,v in pairs(inv:GetAttributes()) do
+        if type(v) == "number" and v > 1 then
+            print(k..": "..tostring(v))
+            found = true
+        end
+    end
+    if not found then print("None") end
+end
+
+-- =====================
+-- Spectator / Teleport helpers
+-- =====================
+local Spectator = {}
+Spectator.active = false
+Spectator.target = nil
+Spectator._conn = nil
+Spectator._inputConnBegin = nil
+Spectator._inputConnEnd = nil
+
+local function findCharacterModels()
+    local chars = {}
+    local charFolder = Workspace:FindFirstChild("Character") or {}
+    for _, v in pairs(charFolder:GetChildren()) do
+        if v:IsA("Model") and v:FindFirstChildOfClass("Humanoid") and v ~= LocalPlayer.Character then
+            table.insert(chars, v.Name)
+        end
+    end
+    return chars
+end
+
+local function getCharacterModelByName(name)
+    local charFolder = Workspace:FindFirstChild("Character")
+    if not charFolder then return nil end
+    for _, v in pairs(charFolder:GetChildren()) do
+        if v:IsA("Model") and v.Name == name and v:FindFirstChildOfClass("Humanoid") then
+            return v
+        end
+    end
+    return nil
+end
+
+function Spectator:start(name)
+    if self.active then self:stop() end
+    local model = getCharacterModelByName(name)
+    if not model or not model.PrimaryPart then
+        warn("Cannot spectate: character not found or missing PrimaryPart")
+        return
+    end
+    self.active = true
+    self.target = model
+    local originalCamType = Camera.CameraType
+    local originalCFrame = Camera.CFrame
+    Camera.CameraType = Enum.CameraType.Scriptable
+
+    local yaw = 0
+    self._conn = RunService.RenderStepped:Connect(function()
+        if not self.active or not self.target or not self.target.PrimaryPart then
+            Spectator:stop()
+            return
+        end
+        local pos = self.target.PrimaryPart.Position
+        local offset = CFrame.new(Vector3.new(0,5,10)) * CFrame.Angles(0, math.rad(yaw), 0)
+        Camera.CFrame = CFrame.new(pos) * offset * CFrame.new(Vector3.new(0,0,0), pos - (pos + offset.Position))
+    end)
+
+    -- Input: Q/E to rotate
+    local qDown, eDown = false, false
+    self._inputConnBegin = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.KeyCode == Enum.KeyCode.Q then qDown = true end
+        if input.KeyCode == Enum.KeyCode.E then eDown = true end
+    end)
+    self._inputConnEnd = UserInputService.InputEnded:Connect(function(input, gameProcessed)
+        if gameProcessed then return end
+        if input.KeyCode == Enum.KeyCode.Q then qDown = false end
+        if input.KeyCode == Enum.KeyCode.E then eDown = false end
+    end)
+
+    -- small update loop to modify yaw
+    coroutine.wrap(function()
+        while self.active do
+            if qDown then yaw = yaw - 2 end
+            if eDown then yaw = yaw + 2 end
+            task.wait(0.03)
+        end
+    end)()
+
+    -- restore logic on stop
+    coroutine.wrap(function()
+        while self.active do task.wait() end
+        Camera.CameraType = originalCamType
+        Camera.CFrame = originalCFrame
+    end)()
+
+    print("Started spectating: "..name)
+end
+
+function Spectator:stop()
+    if self._conn then self._conn:Disconnect() self._conn = nil end
+    if self._inputConnBegin then self._inputConnBegin:Disconnect() self._inputConnBegin = nil end
+    if self._inputConnEnd then self._inputConnEnd:Disconnect() self._inputConnEnd = nil end
+    self.active = false
+    self.target = nil
+    print("Stopped spectating")
+end
+
+function Spectator:teleportTo(name)
+    local model = getCharacterModelByName(name)
+    if not model or not model.PrimaryPart or not LocalPlayer.Character or not LocalPlayer.Character.PrimaryPart then
+        warn("Cannot teleport: invalid character")
+        return
+    end
+    if self.active then self:stop() end
+    teleportToPosition(model.PrimaryPart.Position + Vector3.new(0,0,5), name)
+end
+
+-- =====================
+-- Main: Load WindUI, create window and bind controls
+-- HWID authentication removed, script proceeds directly.
+-- =====================
+local windui = loadWindUI()
+if not windui then
+    warn("WindUI not available - continuing without GUI controls")
+else
+    local ui = windui
+    local window = ui:CreateWindow({Title = "WindUI AutoFarm", Icon = "rbxassetid://129260712070622", Theme = "Dark"})
+
+    -- Main tab: choose points and toggles
+    local mainTab = window:Tab({Title = "หลัก", Icon = "bird"})
+
+    local pointNames = {}
+    for _, p in ipairs(AutoFarmPoints) do table.insert(pointNames, p.name) end
+
+    local selectedPoints = {}
+    local selectDropdown = mainTab:Dropdown({Title = "เลือกจุดฟาร์ม", Values = pointNames, Multi = true, AllowNone = true, Callback = function(values)
+        selectedPoints = values
+        print("Selected:", HttpService:JSONEncode(values))
+    end})
+
+    local startSelectedToggle = mainTab:Toggle({Title = "เริ่ม/หยุดฟาร์มที่เลือก", Value = false, Callback = function(val)
+        if val then
+            if #selectedPoints == 0 then ui:Notify({Title="ข้อผิดพลาด", Content = "กรุณาเลือกจุดฟาร์มอย่างน้อย 1 จุด", Icon = "x"})
+                selectDropdown:Set(false)
+                return
+            end
+            AutoFarm:startSelected(selectedPoints)
+            ui:Notify({Title="AutoFarm", Content="เริ่มฟาร์มที่จุดที่เลือก", Icon="check"})
+        else
+            AutoFarm:stop()
+            ui:Notify({Title="AutoFarm", Content="หยุดฟาร์มที่จุดที่เลือก", Icon="x"})
+        end
+    end})
+
+    local allToggle = mainTab:Toggle({Title = "Enable AutoFarm (ทั้งหมด)", Value = false, Callback = function(val)
+        if val then
+            AutoFarm:startAll()
+            ui:Notify({Title="AutoFarm", Content="AutoFarm เริ่มทำงาน!", Icon="check"})
+        else
+            AutoFarm:stop()
+            ui:Notify({Title="AutoFarm", Content="AutoFarm หยุดทำงาน!", Icon="x"})
+        end
+    end})
+
+    local grassToggle = mainTab:Toggle({Title = "ฟาร์ม Grassbush ขาย NPC", Value = false, Callback = function(val)
+        if val then
+            -- run a dedicated loop which targets grassbush then uses NPC economy interaction
+            coroutine.wrap(function()
+                while val do
+                    performAutoFarmAt({ name = "Grassbush Point", path = {"AutoFarm","Grassbush","Point","ProximityPrompt"}, pos = Vector3.new(-2449.72412109375,73,-2038.025390625), waitTime = 750 })
+                    -- NPC economy prompt behavior simplified
+                    local npcPrompt = findProximityPromptWithRetries({"NPC","Economy","HumanoidRootPart","ProximityPrompt"}, 2)
+                    if npcPrompt then
+                        teleportToPosition(npcPrompt.Parent.Position, "Economy NPC")
+                        npcPrompt.HoldDuration = 0
+                        for i=1,3 do pressE() task.wait(0.3) end
+                    end
+                    task.wait(0.1)
+                    if not val then break end
+                end
+            end)()
+        else
+            -- stopping handled by the toggle context in UI library
+        end
+    end})
+
+    local coconutToggle = mainTab:Toggle({Title = "ฟาร์ม Coconut", Value = false, Callback = function(val)
+        if val then
+            coroutine.wrap(function()
+                while val do
+                    performAutoFarmAt({ name = "Coconut Point", path = {"AutoFarm","Coconut","Point","ProximityPrompt"}, pos = Vector3.new(-2833.5302734375,18.511947631835938,2197.18505859375), waitTime = 185 })
+                    -- NPC interaction
+                    local npcPrompt = findProximityPromptWithRetries({"NPC","Economy","HumanoidRootPart","ProximityPrompt"}, 2)
+                    if npcPrompt then
+                        teleportToPosition(npcPrompt.Parent.Position, "Economy NPC")
+                        npcPrompt.HoldDuration = 0
+                        for i=1,3 do pressE() task.wait(0.3) end
+                    end
+                    task.wait(0.1)
+                    if not val then break end
+                end
+            end)()
+        end
+    end})
+
+    -- Player info tab
+    local infoTab = window:Tab({Title = "ข้อมูลผู้เล่น", Icon = "package"})
+    local playersDropdown = infoTab:Dropdown({Title = "เลือกผู้เล่น", Values = listPlayers(), Multi = false, AllowNone = false, Callback = function(val) end})
+    infoTab:Button({Title = "ตรวจสอบของ", Icon = "search", Callback = function()
+        local target = playersDropdown.Value or playersDropdown:GetValue()
+        if not target then ui:Notify({Title = "ข้อผิดพลาด", Content = "กรุณาเลือกผู้เล่นก่อน", Icon = "x"}) return end
+        inspectInventoryFor(target)
+    end})
+    infoTab:Button({Title = "ตรวจสอบเบอร์โทร", Icon = "phone", Callback = function()
+        local target = playersDropdown.Value or playersDropdown:GetValue()
+        if not target then ui:Notify({Title = "ข้อผิดพลาด", Content = "กรุณาเลือกผู้เล่นก่อน", Icon = "x"}) return end
+        inspectPhoneFor(target)
+    end})
+
+    -- Spectate / TP tab
+    local viewTab = window:Tab({Title = "ดูตัวละคร", Icon = "bird"})
+    local charDropdown = viewTab:Dropdown({Title = "เลือกตัวละคร", Values = findCharacterModels(), Multi = false, AllowNone = true, Callback = function(v)
+        if v and v ~= "" then Spectator:start(v) else Spectator:stop() end
+    end})
+    viewTab:Button({Title = "หยุดการติดตาม", Callback = function() Spectator:stop() end})
+    viewTab:Button({Title = "กลับไปยังมุมมองปกติ", Callback = function() Spectator:stop() end})
+    viewTab:Button({Title = "TP ไปหาตัวละคร", Callback = function()
+        local target = charDropdown.Value or charDropdown:GetValue()
+        if target and target ~= "" then Spectator:teleportTo(target) else ui:Notify({Title="ข้อผิดพลาด", Content="กรุณาเลือกตัวละครก่อน TP", Icon="x"}) end
+    end})
+
+    -- Finalize
+    WindUIWindow = window
+end
+
+print("SP_HUB_CLEAN loaded (HWID Check REMOVED)")
